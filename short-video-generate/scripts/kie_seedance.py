@@ -46,9 +46,8 @@ MODEL = "bytedance/seedance-2-mini"
 # 单段时长硬限：平台只开放 4–15 秒，超了拆镜，短了交后期。
 DURATION_MIN, DURATION_MAX = 4, 15
 
-# 默认 720p：竖屏 720×1280 是能交付的底线。480p 只用来试动作和运镜，
-# 试完还要重出，反而更费时间，所以不做默认。
-DEFAULT_RESOLUTION = "720p"
+# 默认 480p：优先控制生成成本和等待时间。需要正式交付清晰度时可显式传 720p。
+DEFAULT_RESOLUTION = "480p"
 DEFAULT_RATIO = "9:16"
 
 # 批量默认 5 路并发。一段视频要等几分钟，串行跑 6 段就是半小时以上；
@@ -509,7 +508,7 @@ def build_parser() -> argparse.ArgumentParser:
     c.add_argument("--last", help="末帧，本地路径或 URL")
     c.add_argument("--duration", type=int, default=5, help=f"{DURATION_MIN}–{DURATION_MAX} 整数秒，默认 5")
     c.add_argument("--ratio", default=DEFAULT_RATIO, help="9:16 / 16:9 / 1:1 / 3:4 / 4:3 / 21:9 / adaptive")
-    c.add_argument("--resolution", default=DEFAULT_RESOLUTION, help="480p / 720p，默认 720p")
+    c.add_argument("--resolution", default=DEFAULT_RESOLUTION, help="480p / 720p，默认 480p")
     c.add_argument(
         "--audio",
         action=argparse.BooleanOptionalAction,

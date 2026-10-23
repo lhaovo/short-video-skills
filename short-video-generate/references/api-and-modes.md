@@ -24,7 +24,7 @@ POST https://kieai.redpandaai.co/api/file-stream-upload   上传参考帧
   "input": {
     "prompt": "最终视频提示词",
     "generate_audio": true,
-    "resolution": "720p",
+    "resolution": "480p",
     "aspect_ratio": "9:16",
     "duration": 6
   }
@@ -35,7 +35,7 @@ POST https://kieai.redpandaai.co/api/file-stream-upload   上传参考帧
 |---|---|---|---|
 | `prompt` | 3–20000 字符 | — | 太长不是好事，见提示词规范 |
 | `generate_audio` | bool | `true` | 默认连音频一起生成；要纯画面用 `--no-audio` |
-| `resolution` | `480p` / `720p` | `720p` | 480p 只试动作 |
+| `resolution` | `480p` / `720p` | `480p` | 需要更高清时显式传 720p |
 | `aspect_ratio` | 9:16 / 16:9 / 1:1 / 3:4 / 4:3 / 21:9 / adaptive | `9:16` | adaptive 仅文生 |
 | `duration` | 4–15 整数 | 5 | 平台虽列 `-1`，行为未明，不传 |
 
@@ -73,7 +73,7 @@ POST https://kieai.redpandaai.co/api/file-stream-upload   上传参考帧
 
 ```json
 {"model": "bytedance/seedance-2-mini",
- "input": {"prompt": "…", "generate_audio": true, "resolution": "720p",
+ "input": {"prompt": "…", "generate_audio": true, "resolution": "480p",
            "aspect_ratio": "9:16", "duration": 5, "web_search": false}}
 ```
 
@@ -82,7 +82,7 @@ POST https://kieai.redpandaai.co/api/file-stream-upload   上传参考帧
 ```json
 {"model": "bytedance/seedance-2-mini",
  "input": {"prompt": "…", "first_frame_url": "https://…", "generate_audio": true,
-           "resolution": "720p", "aspect_ratio": "9:16", "duration": 6}}
+           "resolution": "480p", "aspect_ratio": "9:16", "duration": 6}}
 ```
 
 ### 首尾帧图生视频
@@ -90,7 +90,7 @@ POST https://kieai.redpandaai.co/api/file-stream-upload   上传参考帧
 ```json
 {"model": "bytedance/seedance-2-mini",
  "input": {"prompt": "…", "first_frame_url": "https://…", "last_frame_url": "https://…",
-           "generate_audio": true, "resolution": "720p", "aspect_ratio": "9:16", "duration": 8}}
+           "generate_audio": true, "resolution": "480p", "aspect_ratio": "9:16", "duration": 8}}
 ```
 
 ## 四、这个模型不支持的
