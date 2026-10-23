@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""生成清单校验：六条机械判据。
+"""生成清单校验：结构、时长、资产与逐段画面字段。
 
 用法：
     python check_gen_list.py --dir <制作目录>
@@ -21,16 +21,9 @@ ASSET_ID = re.compile(r"(?:PR|SC|CH|SP)-\d{2}[A-Z]?", re.I)
 SEG_HEADING = re.compile(r"^#{2,4}\s*(S\d{2})\b", re.M)
 TOLERANCE_SEC = 1.0
 MIN_SEG, MAX_SEG = 2.0, 10.0
-VISUAL_FIELDS = {
-    "主体": r"主体",
-    "状态": r"状态",
-    "动作": r"动作",
-    "环境": r"环境",
-    "光线": r"光线",
-    "景别": r"景别",
-    "机位/角度": r"机位\s*/\s*角度|机位/角度|机位和角度|相机位置",
-    "运镜": r"运镜",
-}
+TABLE_FIELDS = (
+    "主体", "状态", "动作", "环境", "光线", "景别", "机位/角度", "运镜", "依赖/可见事实"
+)
 
 
 def split_row(line: str) -> list[str]:
@@ -60,6 +53,33 @@ def parse_tables(text: str) -> list[tuple[list[str], list[list[str]]]]:
         else:
             i += 1
     return tables
+
+
+def find_field_table(body: str) -> dict[str, str] | None:
+    for header, rows in parse_tables(body):
+        if not header or header[0].strip() != "画面字段":
+            continue
+        values = {}
+        for row in rows:
+            if len(row) >= 2 and row[0].strip():
+                key = re.sub(r"\*\*", "", row[0]).strip()
+                values[key] = row[1].strip()
+        return values or None
+    return None
+
+
+def is_blank(value: str, field: str) -> bool:
+    if re.search(r"\{\{.*?\}\}", value or ""):
+        return True
+    text = re.sub(r"\{\{.*?\}\}", "", value or "").replace("**", "").strip()
+    if not text or text in {"-", "—"}:
+        return True
+    if text == "无":
+        return field != "依赖/可见事实"
+    if text.startswith("不适用"):
+        reason = re.sub(r"^不适用\s*[:：]?\s*", "", text).strip()
+        return len(reason) < 4
+    return len(text) < 2
 
 
 def col_index(header: list[str], *keywords: str) -> int | None:
@@ -113,7 +133,7 @@ def parse_target_from_plan(path: Path) -> float | None:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="生成清单六条判据校验")
+    ap = argparse.ArgumentParser(description="生成清单机械字段校验")
     ap.add_argument("--dir", help="制作目录（含 02-资产清单.md 与 03-生成清单.md）")
     ap.add_argument("--gen", help="生成清单路径")
     ap.add_argument("--assets", help="资产清单路径")
@@ -172,6 +192,7 @@ def main() -> int:
     c_mode = col_index(header, "模式")
     c_ref = col_index(header, "引用", "素材")
     c_first = col_index(header, "首帧")
+    c_dep = col_index(header, "前置依赖", "关键事实")
 
     segments = []
     for r in rows:
@@ -186,6 +207,7 @@ def main() -> int:
                 "mode": get(r, c_mode),
                 "ref": get(r, c_ref),
                 "first": get(r, c_first),
+                "dependency": get(r, c_dep),
             }
         )
 
@@ -211,7 +233,9 @@ def main() -> int:
     info["total_sec"] = round(total, 2)
     if bad_dur:
         fatal.append("[F2] 时长缺失或非正数：" + "、".join(bad_dur))
-    if target and abs(total - target) > TOLERANCE_SEC:
+    if target is None:
+        warn.append("[W5] 目标时长未解析，时长闭合检查已跳过（显式传 --target 恢复）")
+    elif abs(total - target) > TOLERANCE_SEC:
         fatal.append(f"[F2] 时长不闭合：合计 {total:g}s，目标 {target:g}s，差 {abs(total - target):.1f}s（容差 1s）")
 
     # F3 引用不悬空
@@ -233,7 +257,7 @@ def main() -> int:
         if missing:
             fatal.append("[F3] 引用未定义资产：" + "、".join(missing))
     elif used:
-        warn.append("[F3] 未提供资产清单，跳过编号核对")
+        warn.append("[W4] 未提供资产清单，跳过编号核对")
 
     # F4 主模式唯一
     main_modes = {s["mode"].strip() for s in segments if s["mode"].strip() and "文生" not in s["mode"]}
@@ -250,22 +274,28 @@ def main() -> int:
         if "首尾帧" in s["mode"] and not s["first"]:
             warn.append(f"[W3] {s['seg']} 声明首尾帧但首帧列为空")
 
-    # F6 提示词块内是否含 Motion / No subtitles
+    # F5-F7 检查逐段提示词结构
     blocks = {}
     matches = list(SEG_HEADING.finditer(gen_text))
     for i, m in enumerate(matches):
         end = matches[i + 1].start() if i + 1 < len(matches) else len(gen_text)
         blocks[m.group(1).upper()] = gen_text[m.end():end]
 
+    expected_segments = {s["seg"].upper() for s in segments}
+    extra_blocks = sorted(set(blocks) - expected_segments)
+    if extra_blocks:
+        fatal.append("[F5] 多出逐段提示词小节：" + "、".join(extra_blocks))
     if not blocks:
-        warn.append("[F6] 未找到逐段提示词小节（### S01 形式），跳过提示词检查")
+        fatal.append("[F5] 未找到逐段提示词小节（### S01 形式）")
     else:
-        missing_blocks = sorted(set(s["seg"].upper() for s in segments) - set(blocks))
+        missing_blocks = sorted(expected_segments - set(blocks))
         if missing_blocks:
-            fatal.append("[F6] 缺逐段提示词小节：" + "、".join(missing_blocks))
+            fatal.append("[F5] 缺逐段提示词小节：" + "、".join(missing_blocks))
 
         no_motion, no_sub = [], []
         for seg_id, body in blocks.items():
+            if seg_id not in expected_segments:
+                continue
             if not re.search(r"Motion\s*[:：]", body, re.I):
                 no_motion.append(seg_id)
             if not re.search(r"No subtitles", body, re.I):
@@ -277,14 +307,37 @@ def main() -> int:
 
         missing_fields = []
         for seg_id, body in blocks.items():
-            missing = [
-                name for name, pattern in VISUAL_FIELDS.items()
-                if not re.search(pattern, body, re.I)
+            if seg_id not in expected_segments:
+                continue
+            values = find_field_table(body)
+            if values is None:
+                missing_fields.append(f"{seg_id}缺画面字段表")
+                continue
+            absent = [field for field in TABLE_FIELDS if field not in values]
+            blank = [
+                field for field in TABLE_FIELDS
+                if field in values and is_blank(values[field], field)
             ]
-            if missing:
-                missing_fields.append(f"{seg_id}缺" + "、".join(missing))
+            details = []
+            if absent:
+                details.append("缺字段：" + "、".join(absent))
+            if blank:
+                details.append("值空：" + "、".join(blank))
+            if details:
+                missing_fields.append(f"{seg_id}" + "；".join(details))
         if missing_fields:
             fatal.append("[F7] 画面字段不完整：" + "；".join(sorted(missing_fields)))
+
+    # F8 检查交接列：旧案例缺列会被标出；事实是否真的入镜由 G2 人工核对。
+    if c_dep is None:
+        fatal.append("[F8] 概览表缺前置依赖/关键事实列")
+    else:
+        unmapped = [s["seg"] for s in segments if is_blank(s["dependency"], "依赖/可见事实")]
+        if unmapped:
+            fatal.append("[F8] 概览表前置依赖/关键事实未填写：" + "、".join(unmapped))
+        only_no = [s["seg"] for s in segments if s["dependency"].strip() == "无"]
+        if only_no:
+            fatal.append("[F8] 概览表只写了无，须补本段关键可见事实：" + "、".join(only_no))
 
     # ---- 输出 ----
     result = {

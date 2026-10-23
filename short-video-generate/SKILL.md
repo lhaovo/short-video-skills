@@ -178,7 +178,7 @@ python scripts/inspect_clip.py --file S02_v1.mp4 --no-expect-audio
 
 **念的和稿子不一致时，不要将就。** 两种处理：重出这一段，或改字幕去贴合实际念的内容。**唯一不能做的是照原稿打字幕**——观众听到的和看到的对不上，比念错本身更伤。
 
-这一项脚本做不了，必须听。
+这一项必须听。含糊关键字可重复转写至少三次辅助比对，逐句人工终审后把结论写入 04-素材/00-台词定案.json；见 references/clip-review.md。
 
 ---
 
@@ -259,7 +259,9 @@ python scripts/inspect_clip.py --file S02_v1.mp4 --no-expect-audio
 | `references/video-prompt.md` | 写视频提示词、改提示词时 |
 | `references/task-ledger.md` | 建台账、续做、判断该不该重提时 |
 | `references/clip-review.md` | 抽帧质检、判失败、决定返修方向时 |
+| references/assembly-ops.md | S4 拼接、字幕与混音的 FFmpeg 实施细节 |
 | `assets/gen-ledger-template.md` | 建台账时 |
+| assets/dialogue-final-template.json | 记录定版台词、转写辅助和人工终审时 |
 | `assets/batch-tasks-example.json` | 批量跑清单时 |
 
 脚本：
