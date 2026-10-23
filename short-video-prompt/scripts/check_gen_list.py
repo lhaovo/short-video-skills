@@ -21,6 +21,16 @@ ASSET_ID = re.compile(r"(?:PR|SC|CH|SP)-\d{2}[A-Z]?", re.I)
 SEG_HEADING = re.compile(r"^#{2,4}\s*(S\d{2})\b", re.M)
 TOLERANCE_SEC = 1.0
 MIN_SEG, MAX_SEG = 2.0, 10.0
+VISUAL_FIELDS = {
+    "主体": r"主体",
+    "状态": r"状态",
+    "动作": r"动作",
+    "环境": r"环境",
+    "光线": r"光线",
+    "景别": r"景别",
+    "机位/角度": r"机位\s*/\s*角度|机位/角度|机位和角度|相机位置",
+    "运镜": r"运镜",
+}
 
 
 def split_row(line: str) -> list[str]:
@@ -250,6 +260,10 @@ def main() -> int:
     if not blocks:
         warn.append("[F6] 未找到逐段提示词小节（### S01 形式），跳过提示词检查")
     else:
+        missing_blocks = sorted(set(s["seg"].upper() for s in segments) - set(blocks))
+        if missing_blocks:
+            fatal.append("[F6] 缺逐段提示词小节：" + "、".join(missing_blocks))
+
         no_motion, no_sub = [], []
         for seg_id, body in blocks.items():
             if not re.search(r"Motion\s*[:：]", body, re.I):
@@ -260,6 +274,17 @@ def main() -> int:
             fatal.append("[F6] 缺 `No subtitles`：" + "、".join(sorted(no_sub)))
         if no_motion:
             warn.append("[W2] 缺 `Motion:` 清单：" + "、".join(sorted(no_motion)))
+
+        missing_fields = []
+        for seg_id, body in blocks.items():
+            missing = [
+                name for name, pattern in VISUAL_FIELDS.items()
+                if not re.search(pattern, body, re.I)
+            ]
+            if missing:
+                missing_fields.append(f"{seg_id}缺" + "、".join(missing))
+        if missing_fields:
+            fatal.append("[F7] 画面字段不完整：" + "；".join(sorted(missing_fields)))
 
     # ---- 输出 ----
     result = {
