@@ -97,12 +97,12 @@ def inspect(path: Path, ratio: str | None, expect_audio: bool | None,
 
     # 三态：给了 --expect-audio 要求有，给了 --no-expect-audio 要求无，
     # 都不给就不判，只如实报告 hasAudio。
-    # 旁白现在由模型念，所以「无声」是高危信号——不判对错，但要提示一句，
+    # 人物对白与旁白由模型生成，所以「无声」是高危信号——不判对错，但要提示一句，
     # 免得空镜和有台词的段落都糊过去。
     if expect_audio is not None and expect_audio != bool(audio):
         errors.append("应该有音轨但没有" if expect_audio else "不该有音轨但有")
     elif expect_audio is None and not audio:
-        warnings.append("没有音轨。这一段如果有台词，说明旁白没生成出来")
+        warnings.append("没有音轨。这一段如果有台词，说明人物对白或旁白没生成出来")
 
     w = h = 0
     actual_ratio = None

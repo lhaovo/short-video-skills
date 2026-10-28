@@ -1,4 +1,6 @@
 import importlib.util
+import json
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -38,6 +40,34 @@ class FieldTableTests(unittest.TestCase):
     def test_no_is_only_valid_for_dependency_fact(self):
         self.assertFalse(gen_check.is_blank("无", "依赖/可见事实"))
         self.assertTrue(gen_check.is_blank("无", "主体"))
+
+    def test_drama_storyboard_json_supplies_target_duration(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "01.json"
+            path.write_text(
+                json.dumps(
+                    {
+                        "summary": "单集测试",
+                        "shots": [
+                            {"order": 1, "duration_sec": 4},
+                            {"order": 2, "duration_sec": 6},
+                        ],
+                    },
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            self.assertEqual(gen_check.parse_target_from_storyboard(path), 10.0)
+
+    def test_readable_drama_storyboard_supplies_target_duration(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "storyboard.md"
+            path.write_text(
+                "### 镜头 1｜中景｜4 秒｜客厅\n\n"
+                "### 镜头 2｜特写｜3 秒｜客厅\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(gen_check.parse_target_from_storyboard(path), 7.0)
 
 
 if __name__ == "__main__":

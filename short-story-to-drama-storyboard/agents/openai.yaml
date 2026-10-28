@@ -1,0 +1,4 @@
+interface:
+  display_name: "Short Story to Drama Storyboard"
+  short_description: "Adapt a short story into single-video or series scripts and shot lists"
+  default_prompt: "Use $short-story-to-drama-storyboard to turn my finished short story into a quality-gated single-episode or multi-episode storyboard."

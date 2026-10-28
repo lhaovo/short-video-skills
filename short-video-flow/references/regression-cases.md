@@ -1,13 +1,13 @@
 # 回归用例与适用范围
 
-改动 plan/prompt/flow 脚本或门禁文字后，运行下列可执行测试。真实案例位于项目本地被忽略的 outputs/，不存在时真实案例测试会跳过；合成测试仍须全绿。
+改动 story/drama/prompt/flow 脚本或门禁文字后，运行下列可执行测试。真实案例位于项目本地被忽略的 outputs/，不存在时真实案例测试会跳过；合成测试仍须全绿。
 
 统一运行：python short-video-flow/scripts/run_regression.py
 
 | 用例 | 输入 | 期望 | 判定范围 |
 |---|---|---|---|
-| R1 | 合成两镜短表；第二镜依赖未来镜号 | check_plan exit 2，报依赖未早于本镜 | 机器可判时序 |
-| R2 | 旧案例五列策划案 | 报旧格式和交接字段缺失，不能误判为六列新模板 | 规范迁移 |
+| R1 | `ai-novel-short-story/scripts/selftest.py` 合成项目 | 三方向、因果规划、连续拆段、整篇审查、修复上限与最终成文均可执行 | 故事状态机 |
+| R2 | `short-story-to-drama-storyboard/scripts/selftest.py` 合成短篇 | 单集/多集改编、脚本质量门、源快照、逐镜分镜与 finalize 均可执行 | 改编分镜状态机 |
 | R3 | v4 字幕及实际时长 65.57s | 本技能 check_rhythm.py 报 11 句、72 字、19.13s 最大空档、10–20s 窗口 0 字；默认 exit 0，严格阈值 4s 时 exit 2 | 字幕时间轴代理指标 |
 | R4 | 合成清单：九字段空表/占位符/散文体、缺交接列 | check_gen_list exit 2；完整九字段表及交接列 exit 0 | F7/F8 防绕过 |
 

@@ -11,7 +11,7 @@
 | PR-01 | 产品主体 | 一致性母版 | 真实拍摄 | {{S01、S02}} | {{已有}} |
 | PR-02 | 产品细节 | {{讲参数}} | {{AI（真实图打底）}} | {{S03}} | {{待出图}} |
 | SC-01 | 场景 | 环境 | AI 生成 | {{S01、S03}} | {{待出图}} |
-| CH-01 | 人物手部 | {{使用动作}} | AI 生成 | {{S02}} | {{待出图}} |
+| CH-01 | 主角 | 角色视觉锚点与一致性母版 | AI 生成（可真人参考） | {{S01、S02}} | {{待出图}} |
 
 ---
 
@@ -19,7 +19,7 @@
 
 1. `PR-01` 产品主体 —— 一切镜头的身份锚点，最先做、最严做
 2. `SC-01` 场景 —— 空间基准
-3. `CH-01` 人物手部
+3. `CH-01` 主角 —— 按改编契约的 `visual_anchor` 建立可复用角色母版
 4. `PR-02` 细节（依赖母版）
 
 ---
@@ -51,12 +51,12 @@ no extra parts, no floating object, no hand, no props
 no people, no text, no watermark, no clutter
 ```
 
-### CH-01 · 人物手部
+### CH-01 · 主角
 
 ```text
-{{画幅}}，女性手部特写，{{年龄感}}，{{袖口描述}}，指甲干净无修饰。
-手停在{{抓握进行到一半}}的状态，拇指压在{{}}边缘。
-{{环境简要}}。{{光位与色温}}。写实，皮肤自然。
+{{画幅}}，{{visual_anchor 原样粘贴}}，正面与三分之二侧面角色身份图。
+中性站姿，自然面向镜头，服装轮廓与关键识别点前后一致。
+{{环境简要}}。{{光位与色温}}。写实，皮肤自然，五官与发丝清晰。
 no freckles, no facial spots, even natural daylight, no studio strobe,
 no split lighting, skin clean smooth and even-toned,
 no oily specular highlights, no blotchy redness,

@@ -115,7 +115,41 @@ def find_gen_table(tables):
     return None, None
 
 
-def parse_target_from_plan(path: Path) -> float | None:
+def parse_target_from_storyboard(path: Path) -> float | None:
+    """Read the target duration from a drama project, storyboard JSON, or readable storyboard."""
+    if path.is_dir():
+        candidates = (
+            path / "storyboards" / "01.json",
+            path / "storyboard.md",
+        )
+        for candidate in candidates:
+            target = parse_target_from_storyboard(candidate)
+            if target is not None:
+                return target
+        return None
+
+    if path.suffix.lower() == ".json":
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return None
+        if isinstance(data, dict):
+            estimated = data.get("estimated_duration_sec")
+            if isinstance(estimated, (int, float)) and estimated > 0:
+                return float(estimated)
+            shots = data.get("shots")
+            if isinstance(shots, list):
+                durations = [
+                    shot.get("duration_sec")
+                    for shot in shots
+                    if isinstance(shot, dict)
+                    and isinstance(shot.get("duration_sec"), (int, float))
+                    and shot["duration_sec"] > 0
+                ]
+                if durations:
+                    return float(sum(durations))
+        return None
+
     try:
         text = path.read_text(encoding="utf-8")
     except OSError:
@@ -129,6 +163,13 @@ def parse_target_from_plan(path: Path) -> float | None:
         m = re.search(pat, text)
         if m:
             return float(m.group(1))
+    shot_durations = re.findall(
+        r"^###\s*镜头\s*\d+｜[^｜\n]+｜\s*(\d+(?:\.\d+)?)\s*秒",
+        text,
+        re.M,
+    )
+    if shot_durations:
+        return float(sum(float(value) for value in shot_durations))
     return None
 
 
@@ -138,7 +179,10 @@ def main() -> int:
     ap.add_argument("--gen", help="生成清单路径")
     ap.add_argument("--assets", help="资产清单路径")
     ap.add_argument("--target", type=float, help="分镜总时长（秒）")
-    ap.add_argument("--plan", help="策划案路径，用于读取目标时长")
+    ap.add_argument(
+        "--storyboard",
+        help="短剧分镜 JSON/Markdown 或 drama 目录，用于读取目标时长",
+    )
     ap.add_argument("--json", action="store_true", help="输出 JSON")
     args = ap.parse_args()
 
@@ -146,14 +190,18 @@ def main() -> int:
         base = Path(args.dir)
         gen_path = Path(args.gen) if args.gen else base / "03-生成清单.md"
         asset_path = Path(args.assets) if args.assets else base / "02-资产清单.md"
-        plan_path = Path(args.plan) if args.plan else base / "01-策划案.md"
+        storyboard_path = (
+            Path(args.storyboard)
+            if args.storyboard
+            else base / "01-故事" / "drama" / "storyboards" / "01.json"
+        )
     else:
         if not args.gen:
             print("缺少输入：用 --dir 或 --gen 指定生成清单", file=sys.stderr)
             return 3
         gen_path = Path(args.gen)
         asset_path = Path(args.assets) if args.assets else None
-        plan_path = Path(args.plan) if args.plan else None
+        storyboard_path = Path(args.storyboard) if args.storyboard else None
 
     if not gen_path.exists():
         print(f"读不了生成清单：{gen_path}", file=sys.stderr)
@@ -173,8 +221,8 @@ def main() -> int:
             asset_text = ""
 
     target = args.target
-    if target is None and plan_path and plan_path.exists():
-        target = parse_target_from_plan(plan_path)
+    if target is None and storyboard_path and storyboard_path.exists():
+        target = parse_target_from_storyboard(storyboard_path)
 
     fatal: list[str] = []
     warn: list[str] = []

@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI Novel Short Story"
+  short_description: "Plan, write, audit, and repair complete Chinese web short stories"
+  default_prompt: "Use $ai-novel-short-story to turn my idea into a complete 3,000–30,000-character short story."
