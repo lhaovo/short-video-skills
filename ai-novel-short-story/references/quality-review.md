@@ -98,8 +98,9 @@ After the whole-story audit and any permitted repair, run the sibling `story-des
 - Resolve blocking findings from `check-ai-patterns.js` and `check-degeneration.js`; advisory findings are judged in context.
 - Punctuation normalization is check-only by default. Apply it only with explicit user or project authorization.
 - Rebuild `story.md` and run `story_state.py validate` after the pass.
+- Present the complete story and de-slop result in the conversation, set `G1-A` to `等待用户确认`, and end the turn before `story_state.py finalize`.
 
-An explicitly skipped de-slop pass on a human-authored source is allowed only when the user wants faithful preservation. Record that choice and the residual style risk.
+An explicitly skipped de-slop pass on a human-authored source is allowed only when the user wants faithful preservation. Record that choice and the residual style risk. Only explicit user approval may change `G1-A` from `等待用户确认` to `已批准`.
 
 ## User-facing report
 

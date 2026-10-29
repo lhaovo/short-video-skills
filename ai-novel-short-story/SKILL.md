@@ -202,15 +202,19 @@ The user may explicitly skip this pass for a faithful human-authored source; rec
 
 Show the de-slop result directly in the conversation: what changed by layer, a few representative before/after passages, remaining blocking or design gaps, and the backup location. Do not respond with only the report path.
 
-### 8. Deliver or revise
+### 8. Present for user approval, then finalize
 
-Finalize when the story is complete, the repair policy is satisfied, and the S1A de-slop pass is complete or explicitly skipped:
+Before calling `finalize`, deliver the full text from `story.md` directly in the conversation as continuous prose. Keep `review.md` and residual quality debt available, but do not include internal review notes in the story. Also state the file path and actual character count.
+
+Then set the managed flow's G1-A gate to `等待用户确认` and end the turn. Do not call `finalize`, update the current production stage, or start storyboarding until the user explicitly confirms this story version.
+
+After user approval, record the approved version in the flow state and run:
 
 ```text
 python <skill-dir>/scripts/story_state.py finalize <project-dir>
 ```
 
-Deliver the full text from `story.md` directly in the conversation as continuous prose. Keep `review.md` and residual quality debt available, but do not include internal review notes in the story. Also state the file path and actual character count. A path-only response is not a completed delivery.
+A path-only response, progress update, or the agent's own reread is not user approval.
 
 For later natural-language revision:
 

@@ -24,7 +24,7 @@ NAME_RE = re.compile(r"^(?P<id>(?:PR|SC|CH|SP)-\d{2}[A-Z]?)_(?P<use>.+?)_v(?P<ve
 # 宽松取编号：文件名不合规时也能对上清单，避免误报「有标记却无文件」
 ID_PREFIX = re.compile(r"^((?:PR|SC|CH|SP)-\d{2}[A-Z]?)", re.I)
 ASSET_ID = re.compile(r"(?:PR|SC|CH|SP)-\d{2}[A-Z]?", re.I)
-DONE_STATUS = ("已有", "已有备选", "完成", "已出")
+DONE_STATUS = ("已有", "完成", "已出")
 MIN_SHORT_SIDE = 720
 
 
@@ -111,14 +111,12 @@ def main() -> int:
     ap.add_argument("--dir", help="制作目录")
     ap.add_argument("--list", help="资产清单路径")
     ap.add_argument("--img-dir", help="资产图目录")
-    ap.add_argument("--sheet", help="生产工单路径（用于锚点候选数检查）")
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args()
 
     base = Path(args.dir) if args.dir else None
     list_path = Path(args.list) if args.list else (base / "02-资产清单.md" if base else None)
     img_dir = Path(args.img_dir) if args.img_dir else (base / "04-素材" / "01-资产图" if base else None)
-    sheet_path = Path(args.sheet) if args.sheet else (base / "04-素材" / "00-工单.md" if base else None)
 
     if not list_path or not list_path.exists():
         print(f"读不了资产清单：{list_path}", file=sys.stderr)
@@ -210,35 +208,6 @@ def main() -> int:
             small.append(f"{p.name}({w}×{h})")
     if small:
         warn.append(f"[A4] 短边小于 {MIN_SHORT_SIDE}px：" + "、".join(small[:6]))
-
-    # A5 锚点级候选数（需工单）
-    sheet_rows = []
-    if sheet_path and sheet_path.exists():
-        try:
-            st = sheet_path.read_text(encoding="utf-8")
-            for h, r in parse_tables(st):
-                if col(h, "编号") is not None and col(h, "级别") is not None:
-                    sheet_rows = [(h, r)]
-                    break
-        except OSError:
-            sheet_rows = []
-    if sheet_rows:
-        h, rws = sheet_rows[0]
-        cid, clv = col(h, "编号"), col(h, "级别")
-        ccd, cver = col(h, "候选"), col(h, "选定")
-        thin = []
-        for r in rws:
-            aid = cell(r, cid).upper()
-            if "锚点" not in cell(r, clv):
-                continue
-            raw = cell(r, ccd) if ccd is not None else ""
-            m = re.search(r"\d+", raw)
-            if m and int(m.group()) < 2:
-                thin.append(f"{aid}(候选{m.group()})")
-            if cver is not None and not cell(r, cver) and by_id.get(aid):
-                thin.append(f"{aid}(未记选定版本)")
-        if thin:
-            warn.append("[A5] 锚点级候选不足或缺选定版本：" + "、".join(thin))
 
     # ---------- 输出 ----------
     result = {

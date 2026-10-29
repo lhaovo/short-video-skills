@@ -225,7 +225,9 @@ python <skill-dir>/scripts/drama_state.py finalize <drama-dir>
 
 The final user-facing delivery is both the complete content of `storyboard.md` shown in the conversation and its saved file. Keep `scripts/`, `quality/`, and episode JSON files available as production records. Do not reply with only the final path.
 
-After G1-B passes, return control to `short-video-flow`. Do not begin S2 or generate prompts from this skill.
+After presenting the current episode script and complete storyboard, set G1-B to `等待用户确认` and end the turn. Do not mark G1-B approved, return control for S2, or generate prompts until the user explicitly confirms this version.
+
+After the user approves, record the approved version in the flow state, return control to `short-video-flow`, and do not begin S2 from this skill.
 
 ## Source Changes and Revisions
 

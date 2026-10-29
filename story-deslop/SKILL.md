@@ -166,6 +166,7 @@ node scripts/normalize-punctuation.js --check <正文文件>
 ## 流程衔接
 
 - S1A 内：完成后交回 `ai-novel-short-story`，重新运行 `story_state.py validate`，再 finalize。
+- 接入 managed flow 时，先把完整故事与去味报告直接呈现给用户，把 G1-A 设为「等待用户确认」并结束回合；用户批准后才能 finalize 和进入 S1B。
 - S1B 前：确认去味后的 `story.md` 已是最终版本，再创建短剧快照。
 - 故事级缺口：交回 `ai-novel-short-story` 的整篇审查、修复或重新规划流程。
 - 短剧脚本和视频提示词：不使用本 skill 自动润色；它们由 `short-story-to-drama-storyboard` 与 `short-video-prompt` 负责。

@@ -23,7 +23,15 @@ description: 把已过 G2 的生成清单落成真实视频片段——按段建
 python short-video-flow/scripts/check_sequence.py --dir <制作目录> --enter S3
 ```
 
-只有 G1-A、G1-B、G2 均通过且退出码为 `0` 才能提交视频任务。已有片段、旧生成清单或用户直接要求生成，都不能成为跳过 S1A、S1B、S2 的理由。检查失败时停止并交回总控。
+只有 G1-A、G1-B、G2 均为「已批准」且退出码为 `0` 才能提交视频任务。已有片段、旧生成清单或用户直接要求生成，都不能成为跳过 S1A、S1B、S2 的理由。检查失败时停止并交回总控。
+
+提交任何付费视频任务前，还必须运行：
+
+```bash
+python short-video-flow/scripts/check_sequence.py --dir <制作目录> --gate G3-A
+```
+
+G3-A 必须是「已批准」，且用户批准范围明确包含视频生成预算。G3-A 为「等待用户确认」或只完成技术检查时，不得提交批量视频。
 
 ---
 
@@ -33,7 +41,7 @@ python short-video-flow/scripts/check_sequence.py --dir <制作目录> --enter S
 
 | 要件 | 在哪 | 缺了会怎样 |
 |---|---|---|
-| `03-生成清单.md` | `short-video-prompt` 产出，且 G2 已过 | 不知道该出几段、每段多长 |
+| `03-生成清单.md` | `short-video-prompt` 产出，且 G2 已由用户批准 | 不知道该出几段、每段多长 |
 | **每段台词原文** | 清单的逐段提示词里 | 模型不知道念什么，会自己编 |
 | 资产图 / 首帧 | `04-素材/01-资产图/`、`04-素材/02-首帧/` | 主体每段一个样 |
 | `KIE_API_KEY` | 环境变量 | 提交不了任务 |
@@ -190,9 +198,11 @@ python scripts/inspect_clip.py --file S02_v1.mp4 --no-expect-audio
 
 **念的和分镜不一致时，不要将就。** 两种处理：重出这一段，或改字幕去贴合实际念的内容。**唯一不能做的是照分镜原稿打字幕**——观众听到的和看到的对不上，比念错本身更伤。
 
-这一项必须听。含糊关键字可重复转写至少三次辅助比对，逐句人工终审后把结论写入 04-素材/00-台词定案.json；见 references/clip-review.md。
+这一项必须听。含糊关键字可重复转写至少三次辅助比对，由 Agent 逐句听核并把结论写入 04-素材/00-台词定案.json；关键结论随 G3 直接交用户确认。见 references/clip-review.md。
 
 每个候选段完成后，在对话中直接给出：段号、候选文件名/可打开链接、媒体体检结果、画面与台词结论、推荐版本及原因。不能只更新台账后回复“已生成”，让用户自己逐段找片。
+
+全部段落的技术体检、抽帧、听声和选片支持完成后，把完整素材清单与残余问题直接呈现给用户，将 G3 的 `门禁状态` 设为「等待用户确认」，结束回合。用户批准前不得进入 S4。
 
 ---
 
@@ -279,7 +289,7 @@ python scripts/inspect_clip.py --file S02_v1.mp4 --no-expect-audio
 | `references/clip-review.md` | 抽帧质检、判失败、决定返修方向时 |
 | references/assembly-ops.md | S4 拼接、字幕与混音的 FFmpeg 实施细节 |
 | `assets/gen-ledger-template.md` | 建台账时 |
-| assets/dialogue-final-template.json | 记录定版台词、转写辅助和人工终审时 |
+| assets/dialogue-final-template.json | 记录定版台词、Agent听核、转写辅助和用户确认时 |
 | `assets/batch-tasks-example.json` | 批量跑清单时 |
 
 脚本：

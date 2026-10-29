@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 def main() -> int:
     test_suites = (
         ("story/deslop", ROOT / "story-deslop" / "tests"),
+        ("assets", ROOT / "short-video-assets" / "tests"),
         ("prompt", ROOT / "short-video-prompt" / "tests"),
         ("flow/rhythm", ROOT / "short-video-flow" / "tests"),
     )
