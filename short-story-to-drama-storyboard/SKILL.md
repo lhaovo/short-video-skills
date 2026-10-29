@@ -24,6 +24,20 @@ Resolve the directory containing this `SKILL.md` and use its `scripts/drama_stat
 
 If the source is `<story-project>/story.md`, use `<story-project>/drama/` as the default output directory. If the user names another output directory, use it.
 
+### Mandatory sequence gate
+
+When this production is managed by `short-video-flow`, S1B may start only after S1A has passed `G1-A`. Do not accept an existing storyboard, an existing story, or a user request to "go straight to prompts" as a reason to skip S1A or this stage.
+
+Before initializing or modifying the drama project, run:
+
+```text
+python <short-video-flow-dir>/scripts/check_sequence.py --dir <production-dir> --enter S1B
+```
+
+The production directory is the parent of `01-故事/`. Exit code `0` is required. After exit code `2`, stop and return to the first incomplete stage in S1A.
+
+An existing storyboard may be supplied only as reference material. It must still pass this stage's adaptation contract, episode scripts, quality gate, and current storyboard review. It cannot jump directly to S2.
+
 The helper maintains:
 
 ```text
@@ -72,6 +86,8 @@ If no episode count is supplied, use the `ai-novel-short-story` project's `plan.
 
 For adaptation criteria, read [references/workflow.md](references/workflow.md#1-source-and-adaptation).
 
+Show the diagnosis directly in the conversation: proposed episode count and duration, what will be preserved, what may be compressed or reordered, and any declared deviation. The saved project remains the formal record, but a path-only response does not count as review.
+
 ### 2. Save the adaptation contract
 
 Create a structured contract containing:
@@ -92,6 +108,8 @@ python <skill-dir>/scripts/drama_state.py save-adaptation <drama-dir> --input <a
 ```
 
 The exact JSON shape is in [references/contracts.md](references/contracts.md#adaptation).
+
+After saving, paste the adaptation contract's key decisions into the conversation: positioning, emotional through-line, must-keep facts, allowed changes, declared deviations, and every core character's `visual_anchor`.
 
 ### 3. Build the episode outline
 
@@ -116,6 +134,8 @@ python <skill-dir>/scripts/drama_state.py save-episodes <drama-dir> --input <epi
 
 Use [references/workflow.md](references/workflow.md#3-episode-outline).
 
+Show the complete episode outline for the requested scope directly in the conversation. For a large series, present it in clearly numbered production batches; never send only the `episodes.md` path.
+
 ### 4. Write episode scripts in order
 
 Write one performable episode at a time. Each script must contain:
@@ -136,6 +156,8 @@ python <skill-dir>/scripts/drama_state.py save-script <drama-dir> --episode 1 --
 
 Scripts are sequential. The next episode cannot be saved until the previous one exists. This protects continuity.
 
+After saving each episode script, show that complete episode script in the conversation before moving to its quality review or storyboard. The user must be able to review action and dialogue without opening `scripts/NN.md`.
+
 ### 5. Review each episode
 
 Score the script for hook, information density, paywall pull when applicable, emotion, duration, and consistency. Review platform-risk issues such as excessive violence, medical misinformation, superstition presented as fact, sexualized minors, dangerous instruction, or prohibited advertising language.
@@ -154,6 +176,8 @@ Quality decisions:
 - `blocked`: do not storyboard.
 
 Read [references/storyboard-quality.md](references/storyboard-quality.md#script-quality-gate) when reviewing.
+
+Report the quality decision, score summary, concrete issues, and repair direction directly in the conversation. If the user only needs the final result, these checks may be summarized, but the complete script still has to be visible.
 
 If `repairable` or `blocked`, rewrite the full episode script from a concrete repair instruction. The helper permits at most one automated repair per episode:
 
@@ -189,6 +213,8 @@ python <skill-dir>/scripts/drama_state.py save-storyboard <drama-dir> --episode 
 
 Use [references/storyboard-quality.md](references/storyboard-quality.md#storyboard-rules) and the JSON contract in [references/contracts.md](references/contracts.md#storyboard).
 
+Show the complete readable storyboard for the episode being confirmed directly in the conversation, including shot number, duration, location, action, dialogue, and visual description. The JSON and `storyboard.md` are production records, not a substitute for user-facing delivery.
+
 ### 7. Finalize
 
 Complete every episode's script, current quality result, and storyboard:
@@ -197,7 +223,9 @@ Complete every episode's script, current quality result, and storyboard:
 python <skill-dir>/scripts/drama_state.py finalize <drama-dir>
 ```
 
-The final user-facing file is `storyboard.md`. Keep `scripts/`, `quality/`, and episode JSON files available as production records.
+The final user-facing delivery is both the complete content of `storyboard.md` shown in the conversation and its saved file. Keep `scripts/`, `quality/`, and episode JSON files available as production records. Do not reply with only the final path.
+
+After G1-B passes, return control to `short-video-flow`. Do not begin S2 or generate prompts from this skill.
 
 ## Source Changes and Revisions
 

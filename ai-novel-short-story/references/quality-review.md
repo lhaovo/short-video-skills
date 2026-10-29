@@ -88,6 +88,19 @@ Rules:
 - Fix the cause rather than hiding a contradiction with another new rule.
 - After repair, verify that all critical issues are resolved. Ordinary residual debt may remain visible.
 
+## S1A de-slop gate
+
+After the whole-story audit and any permitted repair, run the sibling `story-deslop` skill before `finalize`.
+
+- Scan the complete continuous story for expression, paragraph focus, and any remaining causality presentation problems.
+- Apply approved prose edits to the affected segment files through `edit-segment`; do not leave them only in a directly edited `story.md`.
+- The pass may not add events, motives, evidence, dialogue, or story facts. Plot-level gaps return to the audit/repair or replanning flow.
+- Resolve blocking findings from `check-ai-patterns.js` and `check-degeneration.js`; advisory findings are judged in context.
+- Punctuation normalization is check-only by default. Apply it only with explicit user or project authorization.
+- Rebuild `story.md` and run `story_state.py validate` after the pass.
+
+An explicitly skipped de-slop pass on a human-authored source is allowed only when the user wants faithful preservation. Record that choice and the residual style risk.
+
 ## User-facing report
 
 Keep the delivery concise:

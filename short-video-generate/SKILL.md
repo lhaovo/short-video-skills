@@ -15,6 +15,18 @@ description: 把已过 G2 的生成清单落成真实视频片段——按段建
 
 ---
 
+## 零、顺序门
+
+在 `short-video-flow` 管理下进入 S3 前必须运行：
+
+```bash
+python short-video-flow/scripts/check_sequence.py --dir <制作目录> --enter S3
+```
+
+只有 G1-A、G1-B、G2 均通过且退出码为 `0` 才能提交视频任务。已有片段、旧生成清单或用户直接要求生成，都不能成为跳过 S1A、S1B、S2 的理由。检查失败时停止并交回总控。
+
+---
+
 ## 一、进来的前提
 
 四样东西缺一不可，缺一样就退回上一段：
@@ -118,7 +130,7 @@ python scripts/kie_seedance.py create \
 # 先预演，把拼装好的请求体看一眼
 python scripts/kie_seedance.py batch --tasks tasks.json --out-dir 04-素材/03-片段 --dry-run
 
-# 确认后真跑，默认 5 段同时
+# 把 dry-run 摘要和候选数直接发给用户，用户确认后真跑；默认 5 段同时
 python scripts/kie_seedance.py batch --tasks tasks.json --out-dir 04-素材/03-片段
 
 # 被限流就降
@@ -180,6 +192,8 @@ python scripts/inspect_clip.py --file S02_v1.mp4 --no-expect-audio
 
 这一项必须听。含糊关键字可重复转写至少三次辅助比对，逐句人工终审后把结论写入 04-素材/00-台词定案.json；见 references/clip-review.md。
 
+每个候选段完成后，在对话中直接给出：段号、候选文件名/可打开链接、媒体体检结果、画面与台词结论、推荐版本及原因。不能只更新台账后回复“已生成”，让用户自己逐段找片。
+
 ---
 
 ## 五、三层状态，别混成一个
@@ -211,6 +225,8 @@ python scripts/inspect_clip.py --file S02_v1.mp4 --no-expect-audio
 3. 状态是「生成成功，待下载」→ **只下载**；URL 过期就查同一 taskId 换新 URL
 4. 状态是「失败」→ **不自动重提**，等用户明确说重做
 
+状态发生变化时，也要直接向用户汇报本轮结果：已通过、待下载、失败、需要重做的段号与原因。台账是追溯记录，不是用户界面。
+
 ---
 
 ## 七、失败怎么处理
@@ -234,6 +250,8 @@ python scripts/inspect_clip.py --file S02_v1.mp4 --no-expect-audio
 **台词类问题占了一半以上。** 这类问题的共同点是：画面看着挺好，只有听才发现。所以每段必须听完再定通过。
 
 返修时**一次只改一个变量**。同时改提示词、时长和首帧，即使成功了也不知道是哪个起了作用，下次同样的问题还会再犯。
+
+需要重新生成、延长等待或调整候选数时，先在对话里列出具体段号、失败层次、计划改动和成本影响，等用户确认后再提交。不要只在台账里写“待确认重新生成”。
 
 详细诊断见 `references/clip-review.md`。
 

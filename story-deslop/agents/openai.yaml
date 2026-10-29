@@ -1,0 +1,4 @@
+interface:
+  display_name: "Story De-slop"
+  short_description: "Remove AI-flavored prose while preserving story facts and author style"
+  default_prompt: "Use $story-deslop to diagnose and revise AI-flavored prose without changing my story facts or intended style."

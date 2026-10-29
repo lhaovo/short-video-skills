@@ -39,6 +39,23 @@ review.md                  audit findings and repair record
 
 Run `python <skill-dir>/scripts/story_state.py --help` if command details are unclear. Never overwrite an existing state file with `init`.
 
+### Mandatory S1A entry
+
+When this skill is used inside `short-video-flow`, every production must start at S1A before running:
+
+```text
+python <short-video-flow-dir>/scripts/check_sequence.py --dir <production-dir> --enter S1A
+```
+
+A user-supplied story does not skip S1A. In that case:
+
+- preserve the original as `01-故事/source-original.md`;
+- create or accept the reader-facing `01-故事/story.md`;
+- record the source, allowed changes, review, and de-slop result in `01-故事/review.md`;
+- require user confirmation before G1-A passes.
+
+Do not hand the story to S1B or initialize a drama project from this skill.
+
 ## Workflow
 
 ### 1. Interpret the request
@@ -164,15 +181,36 @@ python <skill-dir>/scripts/story_state.py repair <project-dir> --input <repair.j
 
 After applying the repair, inspect the changed segments against every critical audit issue. If a critical issue remains, stop and report the blocker; do not silently mark the work complete.
 
-### 7. Deliver or revise
+### 7. Remove AI-flavored prose before finalize
 
-Finalize when the story is complete and the repair policy is satisfied:
+After the whole-story audit and the one permitted repair, run `$story-deslop` on the complete `story.md` before delivery. This is the final S1A quality pass and must finish before S1B creates its source snapshot.
+
+- Resolve the sibling `story-deslop` skill directory and follow its three-layer method.
+- Diagnose the complete story, but apply approved prose changes to affected `segments/NN.md` through `edit-segment`; never leave edits only in a directly modified `story.md`.
+- Allow expression, paragraph focus, and restoration of already-established causality. Do not add events, motives, evidence, dialogue, or new story facts in this pass.
+- Resolve blocking findings from `check-ai-patterns.js` and `check-degeneration.js`, or register only explicitly justified writer-approved literal spans in the project's `.deslop-whitelist`.
+- Run punctuation normalization as a check by default. Apply it only when the user or project explicitly asks.
+- If the story still has a plot-level gap, return it to the audit/repair or replanning path rather than hiding it with prose.
+
+After the de-slop pass, rebuild `story.md` from segments and run:
+
+```text
+python <ai-novel-short-story-dir>/scripts/story_state.py validate <project-dir>
+```
+
+The user may explicitly skip this pass for a faithful human-authored source; record the skip reason and residual style risk. AI-written stories do not skip it by default.
+
+Show the de-slop result directly in the conversation: what changed by layer, a few representative before/after passages, remaining blocking or design gaps, and the backup location. Do not respond with only the report path.
+
+### 8. Deliver or revise
+
+Finalize when the story is complete, the repair policy is satisfied, and the S1A de-slop pass is complete or explicitly skipped:
 
 ```text
 python <skill-dir>/scripts/story_state.py finalize <project-dir>
 ```
 
-Deliver the text from `story.md` as continuous prose. Keep `review.md` and residual quality debt available, but do not include internal review notes in the story.
+Deliver the full text from `story.md` directly in the conversation as continuous prose. Keep `review.md` and residual quality debt available, but do not include internal review notes in the story. Also state the file path and actual character count. A path-only response is not a completed delivery.
 
 For later natural-language revision:
 
@@ -181,6 +219,8 @@ For later natural-language revision:
 3. Ask for confirmation before changing completed prose that affects ending, scale, or core intent.
 4. Apply only the confirmed scope; update the plan and downstream segments when causality changes.
 5. Do not automatically invoke another full audit or another repair round.
+
+After a revision, paste the affected revised prose directly in the conversation, not only the updated file path. If the revision changes the complete story flow, paste the revised full story or the complete affected sequence with enough surrounding context for the user to judge continuity.
 
 If the user later wants a short-drama storyboard, offer `$short-story-to-drama-storyboard` as an optional downstream step. A single-episode short video uses 1 episode and 20–300 seconds; a series uses 2–40 episodes. Do not perform adaptation, scripts, or storyboarding inside this skill.
 
